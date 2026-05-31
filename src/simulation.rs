@@ -11,11 +11,11 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub fn new(memSize: u32, regCount: u32) -> Self {
+    pub fn new(mem_size: u32, reg_count: u32) -> Self {
         Self {
-            memory: Memory::new(memSize),
-            register_bank: RegisterBank::new(regCount),
-            pipeline: 
+            memory: Memory::new(mem_size),
+            register_bank: RegisterBank::new(reg_count),
+            pipeline: [Instruction::new(); PIPELINE_LENGTH],
             ip: 0,
             head: 0,
         }

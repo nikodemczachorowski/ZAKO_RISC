@@ -1,3 +1,4 @@
+#[derive(Clone)]
 struct Register {
     pub val: i32,
     pub busy: bool,
@@ -8,6 +9,17 @@ pub struct RegisterBank {
 }
 
 impl RegisterBank {
+    pub fn new(reg_count: u32) -> Self {
+        RegisterBank {
+            registers: vec![
+                Register {
+                    val: 0,
+                    busy: false,
+                };
+                reg_count as usize
+            ],
+        }
+    }
     pub fn get_register_value(&self, reg: u8) -> i32 {
         self.registers[reg as usize].val
     }

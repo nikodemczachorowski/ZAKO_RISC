@@ -1,6 +1,7 @@
 use crate::memory::*;
 use crate::register_bank::*;
 
+#[derive(Copy, Clone)]
 enum PipelineStage {
     IF,
     ID,
@@ -9,7 +10,9 @@ enum PipelineStage {
     WB,
 }
 
+#[derive(Copy, Clone)]
 enum ALU {
+    NOP,
     ADD(i32, i32),
     SUB(i32, i32),
     MUL(i32, i32),
@@ -21,6 +24,7 @@ enum ALU {
     STORE(i32, u32),
 }
 
+#[derive(Copy, Clone)]
 pub struct Instruction {
     stage: PipelineStage,
     in_str: u32,
@@ -33,6 +37,18 @@ pub struct Instruction {
 }
 
 impl Instruction {
+    pub fn new() -> Self {
+        Self {
+            stage: PipelineStage::IF,
+            in_str: 0,
+            operation: ALU::NOP,
+            reg1: 0,
+            reg2: 0,
+            imm: 0,
+            dest: 0,
+            res: 0,
+        }
+    }
     pub fn fetch(&mut self, addr: u32, mem: Memory) {
         self.in_str = mem.read(addr);
     }

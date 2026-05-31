@@ -31,6 +31,11 @@ macro_rules! impl_mem_ops {
 impl_mem_ops!(u8, u16, u32, i8, i16, i32);
 
 impl Memory {
+    pub fn new(size: u32) -> Self {
+        Memory {
+            mem: vec![0u8; size as usize],
+        }
+    }
     pub fn read<T: Memable>(&self, addr: u32) -> T {
         let us_addr = addr as usize;
         T::from_bytes(&self.mem[us_addr..us_addr + T::SIZE])
