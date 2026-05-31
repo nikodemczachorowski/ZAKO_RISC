@@ -1,0 +1,30 @@
+struct Register {
+    pub val: i32,
+    pub busy: bool,
+}
+
+pub struct RegisterBank {
+    registers: Vec<Register>,
+}
+
+impl RegisterBank {
+    pub fn get_register_value(&self, reg: u8) -> i32 {
+        self.registers[reg as usize].val
+    }
+
+    pub fn update_register_value(&mut self, reg: u8, val: i32) {
+        self.registers[reg as usize].val = val;
+    }
+
+    pub fn is_register_busy(&self, reg: u8) {
+        self.registers[reg as usize].busy;
+    }
+
+    pub fn makr_as_busy(&mut self, reg: u8) {
+        self.registers[reg as usize].busy = true;
+    }
+
+    pub fn unmark_as_busy(&mut self, reg: u8) {
+        self.registers[reg as usize].busy = false;
+    }
+}
