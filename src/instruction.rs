@@ -1,3 +1,4 @@
+use crate::jump_prediction::Jump_Prediction;
 use crate::memory::*;
 use crate::register_bank::*;
 
@@ -13,6 +14,12 @@ enum ALU {
     XOR(i32, i32),
     LOAD(u32),
     STORE(i32, u32),
+    BRZ(i32, i32),
+    BRNZ(i32, i32),
+    BRGT(i32, i32),
+    BRGE(i32, i32),
+    BRLT(i32, i32),
+    BRLE(i32, i32),
 }
 
 #[derive(Copy, Clone)]
@@ -21,6 +28,7 @@ pub struct Instruction {
     operation: ALU,
     dest: u8,
     res: i32,
+    addr: u32,
 }
 
 impl Instruction {
@@ -30,10 +38,21 @@ impl Instruction {
             operation: ALU::NOP,
             dest: 0,
             res: 0,
+            addr: 0x00,
         }
     }
-    pub fn fetch(&mut self, addr: u32, mem: &Memory) {
-        self.in_code = mem.read(addr);
+    pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut Jump_Prediction) {
+        self.in_code = mem.read(*addr);
+        self.addr = *addr;
+        let (dest, result) =jump_prediction.predict(*addr);
+        if dest == 0 && result == true
+        {
+            *addr = (self.in_code & 0x1FFFFF);
+        }
+        else if dest != 0 && result == true
+        {
+            *addr = dest;
+        }
     }
 
     pub fn decode(&mut self, regs: &RegisterBank) {
@@ -42,9 +61,12 @@ impl Instruction {
         let reg1 = ((self.in_code >> 16) & 0b11111) as u8;
         let val1 = regs.get_register_value(reg1);
 
+
         let val2 = if opcode & 0x10 == 0 {
             let reg2 = ((self.in_code >> 11) & 0b11111) as u8;
             regs.get_register_value(reg2)
+        } else if opcode & 0x20 == 1 {
+            (self.in_code & 0x1FFFFF) as i32
         } else {
             (self.in_code & 0xFFFF) as i32
         };
@@ -64,11 +86,17 @@ impl Instruction {
                 self.res = regs.get_register_value(self.dest);
                 ALU::STORE(self.res, (val1 + val2) as u32)
             }
+            0x20 => ALU::BRZ(val1, val2),
+            0x21 => ALU::BRNZ(val1, val2),
+            0x22 => ALU::BRGT(val1, val2),
+            0x23 => ALU::BRGE(val1, val2),
+            0x24 => ALU::BRLT(val1, val2),
+            0x25 => ALU::BRLE(val1, val2),
             _ => ALU::NOP,
         }
     }
 
-    pub fn execute(&mut self) {
+    pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32) {
         match self.operation {
             ALU::ADD(op1, op2) => self.res = op1 + op2,
             ALU::SUB(op1, op2) => self.res = op1 - op2,
@@ -77,7 +105,37 @@ impl Instruction {
             ALU::AND(op1, op2) => self.res = op1 & op2,
             ALU::OR(op1, op2) => self.res = op1 | op2,
             ALU::XOR(op1, op2) => self.res = op1 ^ op2,
-            _ => (),
+            ALU::BRZ(op1, op2) => {
+                self.res = (op1 == 0) as i32;
+                jump_prediction.change(self.addr, op1 != 0, op2);
+                *ip = op2 as u32;
+            },
+            ALU::BRNZ(op1, op2) => {
+                self.res = (op1 != 0) as i32;
+                jump_prediction.change(self.addr, op1 != 0, op2);
+                *ip = op2 as u32;
+            },
+            ALU::BRGT(op1, op2) => {
+                self.res = (op1 > 0) as i32;
+                jump_prediction.change(self.addr, op1 != 0, op2);
+                *ip = op2 as u32;
+            },
+            ALU::BRGE(op1, op2) =>{
+                self.res = (op1 >= 0) as i32;
+                jump_prediction.change(self.addr, op1 != 0, op2);
+                *ip = op2 as u32;
+            },
+            ALU::BRLT(op1, op2) => {
+                self.res = (op1 < 0) as i32;
+                jump_prediction.change(self.addr, op1 != 0, op2);
+                *ip = op2 as u32;
+            },
+            ALU::BRLE(op1, op2) => {
+                self.res = (op1 <= 0) as i32;
+                jump_prediction.change(self.addr, op1 != 0, op2);
+                *ip = op2 as u32;
+            },
+            _ => println!("Unimplemented operation"),
         }
     }
 
