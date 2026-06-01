@@ -46,7 +46,7 @@ impl Instruction {
     pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut Jump_Prediction) {
         self.in_code = mem.read(*addr);
         self.addr = *addr;
-        if(self.in_code & (1<<31) == 1)
+        if((self.in_code & (1<<31)) != 0)
         {
             let (dest, result) = jump_prediction.predict(*addr);
 
