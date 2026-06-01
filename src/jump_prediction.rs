@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::io;
 use crate::instruction::Instruction;
 
 pub struct Jump_Prediction{
@@ -45,6 +46,7 @@ impl Jump_Prediction {
             GHB: 0,
         };
         prediction.build();
+        prediction.choose();
         prediction
     }
     fn build(&mut self) -> ()
@@ -56,9 +58,30 @@ impl Jump_Prediction {
     pub fn change(&mut self, addr: u32, result: bool, dest: i32) {
         self.BTB.insert(addr, (dest as u32,result));
     }
-    pub fn choose(&mut self, algorithm_number: u8) -> ()
+    pub fn choose(&mut self) -> ()
     {
-        self.chosen = self.algorithms[algorithm_number as usize].1.clone();
+        let mut i: u32 = 1;
+        for (func, name) in self.algorithms.iter() {
+            println!("{}. {}", i, name);
+            i = i + 1;
+        }
+        let algorithm_number: u32 = loop {
+            let mut algorithm_number_to_parse: String = String::new();
+            io::stdin()
+                .read_line(&mut algorithm_number_to_parse)
+                .expect("FAILED READING ALGORITHM");
+
+            match algorithm_number_to_parse.trim().parse::<u32>() {
+                Ok(number) if number < self.algorithms.len() as u32 => {
+                    break number;
+                }
+                _ => {
+                    println!("It is not correct number. Try again:");
+                    continue;
+                }
+            }
+        };
+        self.chosen = self.algorithms[(algorithm_number-1) as usize].1.clone();
     }
 
     pub fn predict(&mut self, addr: u32) -> (u32, bool)
@@ -68,7 +91,7 @@ impl Jump_Prediction {
             if self.chosen == self.algorithms[i].1
             {
                 let function = self.algorithms[i].0;
-                function(self, addr);
+                return function(self, addr);
             }
         }
         println!("You did not choose jump prediction algorithm.");

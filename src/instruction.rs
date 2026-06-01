@@ -4,7 +4,7 @@ use crate::jump_prediction::Jump_Prediction;
 use crate::memory::*;
 use crate::register_bank::*;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum ALU {
     NOP,
     ADD(i32, i32),
@@ -24,7 +24,7 @@ enum ALU {
     BRLE(i32, i32),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Instruction {
     in_code: u32,
     operation: ALU,
@@ -46,11 +46,15 @@ impl Instruction {
     pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut Jump_Prediction) {
         self.in_code = mem.read(*addr);
         self.addr = *addr;
-        let (dest, result) = jump_prediction.predict(*addr);
-        if dest == 0 && result == true {
-            *addr = self.in_code & 0xFFFF;
-        } else if dest != 0 && result == true {
-            *addr = dest;
+        if(self.in_code & (1<<31) == 1)
+        {
+            let (dest, result) = jump_prediction.predict(*addr);
+
+            if dest == 0 && result == true {
+                *addr = self.in_code & 0xFFFF;
+            } else if dest != 0 && result == true {
+                *addr = dest;
+            }
         }
     }
 
@@ -68,7 +72,7 @@ impl Instruction {
         } else {
             (self.in_code & 0xFFFF) as i32
         };
-
+        dbg!(&self);
         opcode &= 0b1111;
         self.operation = match opcode {
             0x00 => ALU::NOP,
