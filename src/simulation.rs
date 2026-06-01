@@ -25,12 +25,15 @@ impl Simulation {
     }
 
     pub fn tick(&mut self) {
+        let former_ip = self.ip;
         self.pipeline[self.head].fetch(&mut self.ip, &self.memory, &mut self.jump_prediction);
         self.pipeline[(self.head + 1) % PIPELINE_LENGTH].decode(&self.register_bank);
         self.pipeline[(self.head + 2) % PIPELINE_LENGTH].execute(&mut self.jump_prediction, &mut self.ip);
         self.pipeline[(self.head + 3) % PIPELINE_LENGTH].memory(&mut self.memory);
         self.pipeline[(self.head + 4) % PIPELINE_LENGTH].write_back(&mut self.register_bank);
-        self.ip += 4;
+        if former_ip == self.ip {
+            self.ip += 4
+        }
         self.head = (self.head + 1) % PIPELINE_LENGTH;
     }
 }
