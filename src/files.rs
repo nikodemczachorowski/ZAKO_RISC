@@ -1,6 +1,8 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader},
+    ops::Deref,
 };
 
 use crate::memory::Memory;
@@ -39,17 +41,21 @@ pub fn read_memory_file(filename: String) -> Memory {
 pub fn read_program_file(filename: String, mem: &mut Memory) {
     let file = File::open(filename).expect("Could not open code file");
     let reader = BufReader::new(file);
+    let mut labels: HashMap<String, u32> = HashMap::new();
+    let mut missing_labels: Vec<(u32, String)> = Vec::new();
 
     let mut next_addr: u32 = 0;
 
     for line_result in reader.lines() {
         let line = line_result.expect("Error reading the file");
-        let cleared = line.replace(",", "");
+        let cleared = line.replace(",", "").replace("(", " ").replace(")", "");
         let parts_vec: Vec<&str> = cleared.split_whitespace().collect();
         let mut parts = parts_vec.as_slice();
-
+        print!("{}\n", line);
         if parts[0].ends_with(":") {
-            //TODO: labels
+            labels
+                .entry(parts[0].trim_end_matches(':').to_string())
+                .or_insert(next_addr);
             parts = &parts[1..];
         }
 
@@ -68,8 +74,8 @@ pub fn read_program_file(filename: String, mem: &mut Memory) {
             "ORI" => 0x16,
             "XOR" => 0x07,
             "XORI" => 0x17,
-            "LDW" => 0x08,
-            "STW" => 0x09,
+            "LDW" => 0x18,
+            "STW" => 0x19,
             "BRZ" => 0x20,
             "BRNZ" => 0x21,
             "BRGT" => 0x22,
@@ -81,45 +87,59 @@ pub fn read_program_file(filename: String, mem: &mut Memory) {
         };
 
         let mut word = 0;
-
-        if opcode & 0x10 == 0 {
-            let rd = parts[1]
+        if opcode == 0 {
+        } else if opcode & 0x10 != 0 {
+            let rd = parts[3]
                 .trim_start_matches('R')
                 .parse::<u8>()
                 .expect("RD Error");
-            let r1 = parts[2]
+            let r1 = parts[1]
                 .trim_start_matches('R')
                 .parse::<u8>()
                 .expect("R1 Error");
-            let r2 = parts[3]
+            let imm_str = parts[2].trim_start_matches("0x");
+            let imm = u32::from_str_radix(imm_str, 16).expect("Imm Error");
+
+            word |= (opcode as u32) << 26;
+            word |= (rd as u32) << 21;
+            word |= (r1 as u32) << 16;
+            word |= imm;
+        } else if opcode & 0x20 != 0 {
+            let r1 = parts[1]
+                .trim_start_matches('R')
+                .parse::<u8>()
+                .expect("R Error");
+            missing_labels.push((next_addr, parts[2].to_string()));
+
+            word |= (opcode as u32) << 26;
+            word |= (r1 as u32) << 16;
+        } else {
+            let rd = parts[3]
+                .trim_start_matches('R')
+                .parse::<u8>()
+                .expect("RD Error");
+            let r1 = parts[1]
+                .trim_start_matches('R')
+                .parse::<u8>()
+                .expect("R1 Error");
+            let r2 = parts[2]
                 .trim_start_matches('R')
                 .parse::<u8>()
                 .expect("R2 Error");
-            word &= (opcode as u32) << 26;
-            word &= (rd as u32) << 21;
-            word &= (r1 as u32) << 16;
-            word &= (r2 as u32) << 11;
-        } else if opcode & 0x20 != 0 {
-        } else {
-            let rd = parts[1]
-                .trim_start_matches('R')
-                .parse::<u8>()
-                .expect("RD Error");
-            let r1 = parts[2]
-                .trim_start_matches('R')
-                .parse::<u8>()
-                .expect("R1 Error");
-            let imm_str = parts[3].trim_start_matches("0x");
-            let imm = u32::from_str_radix(imm_str, 16).expect("Imm Error");
 
-            word &= (opcode as u32) << 26;
-            word &= (rd as u32) << 21;
-            word &= (r1 as u32) << 16;
-            word &= imm;
+            word |= (opcode as u32) << 26;
+            word |= (rd as u32) << 21;
+            word |= (r1 as u32) << 16;
+            word |= (r2 as u32) << 11;
         }
 
         mem.write(next_addr, word);
         next_addr += 4;
+    }
+
+    for hole in missing_labels {
+        let label_addr: u32 = *labels.get(&hole.1).expect("Missing lable");
+        mem.write(hole.0 + 2, label_addr);
     }
 }
 
