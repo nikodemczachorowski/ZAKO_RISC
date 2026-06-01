@@ -138,14 +138,14 @@ pub fn read_program_file(filename: String, mem: &mut Memory) {
     }
 
     for hole in missing_labels {
-        let label_addr: u32 = *labels.get(&hole.1).expect("Missing lable");
+        let label_addr: u16 = *labels.get(&hole.1).expect("Missing lable") as u16;
         mem.write(hole.0 + 2, label_addr);
     }
 }
 
 pub fn print_mem(mem: &Memory) {
     let mut next_addr: u32 = 0;
-    while next_addr < 2000 {
+    while next_addr < 2016 {
         let val: i32 = mem.read(next_addr);
         print!("{:08X} ", val);
         next_addr += 4;

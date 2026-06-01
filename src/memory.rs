@@ -17,11 +17,11 @@ macro_rules! impl_mem_ops {
                 fn from_bytes(bytes: &[u8]) -> Self{
                     let mut buf = [0u8; Self::SIZE];
                     buf.copy_from_slice(&bytes[..Self::SIZE]);
-                    <$t>::from_le_bytes(buf)
+                    <$t>::from_be_bytes(buf)
                 }
 
                 fn to_bytes(self, dest: &mut [u8]) {
-                    dest.copy_from_slice(&self.to_le_bytes());
+                    dest.copy_from_slice(&self.to_be_bytes());
                 }
             }
         )*
