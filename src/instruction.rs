@@ -1,3 +1,5 @@
+use std::mem::swap;
+
 use crate::jump_prediction::Jump_Prediction;
 use crate::memory::*;
 use crate::register_bank::*;
@@ -53,7 +55,7 @@ impl Instruction {
         self.addr = *addr;
         let (dest, result) = jump_prediction.predict(*addr);
         if dest == 0 && result == true {
-            *addr = self.in_code & 0x1FFFFF;
+            *addr = self.in_code & 0xFFFF;
         } else if dest != 0 && result == true {
             *addr = dest;
         }
@@ -62,14 +64,14 @@ impl Instruction {
     pub fn decode(&mut self, regs: &RegisterBank) {
         let mut opcode: u8 = (self.in_code >> 26) as u8;
         self.dest = ((self.in_code >> 21) & 0b11111) as u8;
-        let reg1 = ((self.in_code >> 16) & 0b11111) as u8;
-        let val1 = regs.get_register_value(reg1);
+        let mut reg1 = ((self.in_code >> 16) & 0b11111) as u8;
+        let mut val1 = regs.get_register_value(reg1);
 
         let val2 = if opcode & 0x10 == 0 {
             let reg2 = ((self.in_code >> 11) & 0b11111) as u8;
             regs.get_register_value(reg2)
         } else if opcode & 0x20 == 1 {
-            (self.in_code & 0x1FFFFF) as i32
+            (self.in_code & 0xFFFF) as i32
         } else {
             (self.in_code & 0xFFFF) as i32
         };
@@ -84,8 +86,14 @@ impl Instruction {
             0x05 => ALU::AND(val1, val2),
             0x06 => ALU::OR(val1, val2),
             0x07 => ALU::XOR(val1, val2),
-            0x08 => ALU::LOAD((val1 + val2) as u32),
+            0x08 => {
+                swap(&mut self.dest, &mut reg1);
+                val1 = regs.get_register_value(reg1);
+                ALU::LOAD((val1 + val2) as u32)
+            }
             0x09 => {
+                swap(&mut self.dest, &mut reg1);
+                val1 = regs.get_register_value(reg1);
                 self.res = regs.get_register_value(self.dest);
                 ALU::STORE(self.res, (val1 + val2) as u32)
             }
