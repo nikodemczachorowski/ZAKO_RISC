@@ -12,6 +12,13 @@ enum ALU {
     AND(i32, i32),
     OR(i32, i32),
     XOR(i32, i32),
+    ADDI(i32, i32),
+    SUBI(i32, i32),
+    MULI(i32, i32),
+    DIVI(i32, i32),
+    ANDI(i32, i32),
+    ORI(i32, i32),
+    XORI(i32, i32),
     LOAD(u32),
     STORE(i32, u32),
     BRZ(i32, i32),
@@ -82,6 +89,13 @@ impl Instruction {
                 self.res = regs.get_register_value(self.dest);
                 ALU::STORE(self.res, (val1 + val2) as u32)
             }
+            0x11 => ALU::ADDI(val1, val2),
+            0x12 => ALU::SUBI(val1, val2),
+            0x13 => ALU::MULI(val1, val2),
+            0x14 => ALU::DIVI(val1, val2),
+            0x15 => ALU::ANDI(val1, val2),
+            0x16 => ALU::ORI(val1, val2),
+            0x17 => ALU::XORI(val1, val2),
             0x20 => ALU::BRZ(val1, val2),
             0x21 => ALU::BRNZ(val1, val2),
             0x22 => ALU::BRGT(val1, val2),
@@ -101,6 +115,13 @@ impl Instruction {
             ALU::AND(op1, op2) => self.res = op1 & op2,
             ALU::OR(op1, op2) => self.res = op1 | op2,
             ALU::XOR(op1, op2) => self.res = op1 ^ op2,
+            ALU::ADDI(op1, op2) => self.res = op1 + op2,
+            ALU::SUBI(op1, op2) => self.res = op1 - op2,
+            ALU::MULI(op1, op2) => self.res = op1 * op2,
+            ALU::DIVI(op1, op2) => self.res = op1 / op2,
+            ALU::ANDI(op1, op2) => self.res = op1 & op2,
+            ALU::ORI(op1, op2) => self.res = op1 | op2,
+            ALU::XORI(op1, op2) => self.res = op1 ^ op2,
             ALU::BRZ(op1, op2) => {
                 self.res = (op1 == 0) as i32;
                 jump_prediction.change(self.addr, op1 != 0, op2);

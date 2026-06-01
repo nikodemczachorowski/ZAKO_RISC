@@ -1,11 +1,12 @@
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-};
+use std::{env, fs::File, io::{BufRead, BufReader}};
 
 use crate::memory::Memory;
 
 pub fn read_memory_file(filename: String) -> Memory {
+    match env::current_dir() {
+        Ok(path) => println!("File::open szuka plików w folderze: {}", path.display()),
+        Err(e) => println!("Nie udało się pobrać katalogu roboczego: {}", e),
+    }
     let file = File::open(filename).expect("Could not open the file");
     let reader = BufReader::new(file);
     let mut mem = Memory::new(3000);
@@ -41,7 +42,6 @@ pub fn read_program_file(filename: String, mem: &mut Memory) {
     let reader = BufReader::new(file);
 
     let mut next_addr: u32 = 0;
-
     for line_result in reader.lines() {
         let line = line_result.expect("Error reading the file");
         let cleared = line.replace(",", "");
@@ -81,7 +81,7 @@ pub fn read_program_file(filename: String, mem: &mut Memory) {
         };
 
         let mut word = 0;
-
+        println!("{}", cleared.to_string());
         if opcode & 0x10 == 0 {
             let rd = parts[1]
                 .trim_start_matches('R')
@@ -105,17 +105,18 @@ pub fn read_program_file(filename: String, mem: &mut Memory) {
                 .trim_start_matches('R')
                 .parse::<u8>()
                 .expect("RD Error");
-            let r1 = parts[2]
+
+            let imm_str = parts[2].trim_start_matches("0x");
+            let imm = u32::from_str_radix(imm_str, 16).expect("Imm Error");
+            let r1 = parts[3]
                 .trim_start_matches('R')
                 .parse::<u8>()
                 .expect("R1 Error");
-            let imm_str = parts[3].trim_start_matches("0x");
-            let imm = u32::from_str_radix(imm_str, 16).expect("Imm Error");
 
-            word &= (opcode as u32) << 26;
-            word &= (rd as u32) << 21;
-            word &= (r1 as u32) << 16;
-            word &= imm;
+            word |= (opcode as u32) << 26;
+            word |= (rd as u32) << 21;
+            word |= (r1 as u32) << 16;
+            word |= imm;
         }
 
         mem.write(next_addr, word);
