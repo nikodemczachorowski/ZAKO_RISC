@@ -44,13 +44,10 @@ impl Instruction {
     pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut Jump_Prediction) {
         self.in_code = mem.read(*addr);
         self.addr = *addr;
-        let (dest, result) =jump_prediction.predict(*addr);
-        if dest == 0 && result == true
-        {
-            *addr = (self.in_code & 0x1FFFFF);
-        }
-        else if dest != 0 && result == true
-        {
+        let (dest, result) = jump_prediction.predict(*addr);
+        if dest == 0 && result == true {
+            *addr = self.in_code & 0x1FFFFF;
+        } else if dest != 0 && result == true {
             *addr = dest;
         }
     }
@@ -60,7 +57,6 @@ impl Instruction {
         self.dest = ((self.in_code >> 21) & 0b11111) as u8;
         let reg1 = ((self.in_code >> 16) & 0b11111) as u8;
         let val1 = regs.get_register_value(reg1);
-
 
         let val2 = if opcode & 0x10 == 0 {
             let reg2 = ((self.in_code >> 11) & 0b11111) as u8;
@@ -109,32 +105,32 @@ impl Instruction {
                 self.res = (op1 == 0) as i32;
                 jump_prediction.change(self.addr, op1 != 0, op2);
                 *ip = op2 as u32;
-            },
+            }
             ALU::BRNZ(op1, op2) => {
                 self.res = (op1 != 0) as i32;
                 jump_prediction.change(self.addr, op1 != 0, op2);
                 *ip = op2 as u32;
-            },
+            }
             ALU::BRGT(op1, op2) => {
                 self.res = (op1 > 0) as i32;
                 jump_prediction.change(self.addr, op1 != 0, op2);
                 *ip = op2 as u32;
-            },
-            ALU::BRGE(op1, op2) =>{
+            }
+            ALU::BRGE(op1, op2) => {
                 self.res = (op1 >= 0) as i32;
                 jump_prediction.change(self.addr, op1 != 0, op2);
                 *ip = op2 as u32;
-            },
+            }
             ALU::BRLT(op1, op2) => {
                 self.res = (op1 < 0) as i32;
                 jump_prediction.change(self.addr, op1 != 0, op2);
                 *ip = op2 as u32;
-            },
+            }
             ALU::BRLE(op1, op2) => {
                 self.res = (op1 <= 0) as i32;
                 jump_prediction.change(self.addr, op1 != 0, op2);
                 *ip = op2 as u32;
-            },
+            }
             _ => println!("Unimplemented operation"),
         }
     }
