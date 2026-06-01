@@ -2,15 +2,6 @@ use crate::memory::*;
 use crate::register_bank::*;
 
 #[derive(Copy, Clone)]
-enum PipelineStage {
-    IF,
-    ID,
-    EX,
-    MEM,
-    WB,
-}
-
-#[derive(Copy, Clone)]
 enum ALU {
     NOP,
     ADD(i32, i32),
@@ -26,12 +17,8 @@ enum ALU {
 
 #[derive(Copy, Clone)]
 pub struct Instruction {
-    stage: PipelineStage,
-    in_str: u32,
+    in_code: u32,
     operation: ALU,
-    reg1: u8,
-    reg2: u8,
-    imm: i32,
     dest: u8,
     res: i32,
 }
@@ -39,21 +26,47 @@ pub struct Instruction {
 impl Instruction {
     pub fn new() -> Self {
         Self {
-            stage: PipelineStage::IF,
-            in_str: 0,
+            in_code: 0,
             operation: ALU::NOP,
-            reg1: 0,
-            reg2: 0,
-            imm: 0,
             dest: 0,
             res: 0,
         }
     }
-    pub fn fetch(&mut self, addr: u32, mem: Memory) {
-        self.in_str = mem.read(addr);
+    pub fn fetch(&mut self, addr: u32, mem: &Memory) {
+        self.in_code = mem.read(addr);
     }
 
-    pub fn decode(&mut self, regs: RegisterBank) {}
+    pub fn decode(&mut self, regs: &RegisterBank) {
+        let mut opcode: u8 = (self.in_code >> 26) as u8;
+        self.dest = ((self.in_code >> 21) & 0b11111) as u8;
+        let reg1 = ((self.in_code >> 16) & 0b11111) as u8;
+        let val1 = regs.get_register_value(reg1);
+
+        let val2 = if opcode & 0x10 == 0 {
+            let reg2 = ((self.in_code >> 11) & 0b11111) as u8;
+            regs.get_register_value(reg2)
+        } else {
+            (self.in_code & 0xFFFF) as i32
+        };
+
+        opcode &= 0b1111;
+        self.operation = match opcode {
+            0x00 => ALU::NOP,
+            0x01 => ALU::ADD(val1, val2),
+            0x02 => ALU::SUB(val1, val2),
+            0x03 => ALU::MUL(val1, val2),
+            0x04 => ALU::DIV(val1, val2),
+            0x05 => ALU::AND(val1, val2),
+            0x06 => ALU::OR(val1, val2),
+            0x07 => ALU::XOR(val1, val2),
+            0x08 => ALU::LOAD((val1 + val2) as u32),
+            0x09 => {
+                self.res = regs.get_register_value(self.dest);
+                ALU::STORE(self.res, (val1 + val2) as u32)
+            }
+            _ => ALU::NOP,
+        }
+    }
 
     pub fn execute(&mut self) {
         match self.operation {

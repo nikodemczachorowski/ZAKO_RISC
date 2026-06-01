@@ -21,5 +21,13 @@ impl Simulation {
         }
     }
 
-    pub fn tick(&mut self) {}
+    pub fn tick(&mut self) {
+        self.pipeline[self.head].fetch(self.ip, &self.memory);
+        self.pipeline[(self.head + 1) % PIPELINE_LENGTH].decode(&self.register_bank);
+        self.pipeline[(self.head + 2) % PIPELINE_LENGTH].execute();
+        self.pipeline[(self.head + 3) % PIPELINE_LENGTH].memory(&mut self.memory);
+        self.pipeline[(self.head + 4) % PIPELINE_LENGTH].write_back(&mut self.register_bank);
+        self.ip += 4;
+        self.head = (self.head + 1) % PIPELINE_LENGTH;
+    }
 }

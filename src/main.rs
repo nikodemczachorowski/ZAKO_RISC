@@ -8,5 +8,5 @@ mod jump_prediction;
 
 fn main() {
     let mut sim = Simulation::new(2000, 32);
-    println!("Hello, world!");
+    sim.tick();
 }
