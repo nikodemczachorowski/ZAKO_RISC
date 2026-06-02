@@ -50,18 +50,22 @@ fn GHR_jump(predictor: &mut Jump_Prediction, addr: u32) -> (u32, bool) {
    {
        predictor.GHR = predictor.GHR << 1;
        predictor.GHR |= 1;
+       predictor.taken.insert(addr,true);
        (dest, true)
    } else {
        predictor.GHR = predictor.GHR << 1; predictor.GHR |= 0;
+       predictor.taken.insert(addr,false);
         (dest, false)
     }
     /*if index >= 2
     {
         predictor.GHR = predictor.GHR << 1; predictor.GHR |= 1;
+        predictor.taken.insert(addr,true);
         (dest, true)
     }
     else {
         predictor.GHR = predictor.GHR << 1; predictor.GHR |= 0;
+        predictor.taken.insert(addr, false);
         (dest, false)
     }*/
 }
