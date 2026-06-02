@@ -97,6 +97,7 @@ impl Instruction {
                 swap(&mut self.dest, &mut reg1);
                 val1 = regs.get_register_value(reg1);
                 self.res = regs.get_register_value(self.dest);
+                println!("STORE: off:{}, idx:{}, val:{}", val2, val1, self.res);
                 ALU::STORE(self.res, (val1 + val2) as u32)
             }
             0x20 => ALU::BRZ(val1, val2),
@@ -171,6 +172,7 @@ impl Instruction {
     }
 
     pub fn write_back(&mut self, regs: &mut RegisterBank) {
+        dbg!(&self);
         if self.dest != 0 {
             regs.update_register_value(self.dest, self.res);
             regs.unmark_as_busy(self.dest);

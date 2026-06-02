@@ -27,13 +27,15 @@ impl Simulation {
     pub fn tick(&mut self) {
         let former_ip = self.ip;
         self.pipeline[self.head].fetch(&mut self.ip, &self.memory, &mut self.jump_prediction);
+        self.pipeline[(self.head + 3) % PIPELINE_LENGTH].memory(&mut self.memory);
+        self.pipeline[(self.head + 4) % PIPELINE_LENGTH].write_back(&mut self.register_bank);
+
         let jump_ip = self.ip;
         self.pipeline[(self.head + 1) % PIPELINE_LENGTH].decode(&self.register_bank);
         self.pipeline[(self.head + 2) % PIPELINE_LENGTH]
             .execute(&mut self.jump_prediction, &mut self.ip);
-        self.pipeline[(self.head + 3) % PIPELINE_LENGTH].memory(&mut self.memory);
-        self.pipeline[(self.head + 4) % PIPELINE_LENGTH].write_back(&mut self.register_bank);
-        if(self.ip != jump_ip) // when fetch changed ip to fetch after jump instructions and execute reversed it due to no jump, reset fetch, decode
+        if self.ip != jump_ip
+        // when fetch changed ip to fetch after jump instructions and execute reversed it due to no jump, reset fetch, decode
         {
             self.pipeline[self.head] = Instruction::new();
             self.pipeline[(self.head + 1) % PIPELINE_LENGTH] = Instruction::new();
