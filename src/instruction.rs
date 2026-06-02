@@ -46,10 +46,10 @@ impl Instruction {
     pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut Jump_Prediction) {
         self.in_code = mem.read(*addr);
         self.addr = *addr;
-        if (self.addr == 424) {
+        if self.addr == 424 {
             println!();
         }
-        if ((self.in_code & (1 << 31)) != 0) {
+        if (self.in_code & (1 << 31)) != 0 {
             let (dest, result) = jump_prediction.predict(*addr);
 
             if dest == 0 && result == true {
@@ -110,7 +110,6 @@ impl Instruction {
     }
 
     pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32) {
-        //dbg!(&self);
         match self.operation {
             ALU::NOP => (),
             ALU::STORE(_, _) => (),
