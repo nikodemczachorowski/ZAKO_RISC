@@ -112,7 +112,7 @@ impl Instruction {
     }
 
     pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32) {
-        dbg!(&self);
+        // dbg!(&self);
         match self.operation {
             ALU::NOP => (),
             ALU::STORE(_, _) => (),
