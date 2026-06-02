@@ -1,10 +1,12 @@
-use std::collections::HashMap;
-use std::io;
+use std::collections::{HashMap, VecDeque};
+use std::{io};
+use rand::random;
 
 pub struct Jump_Prediction {
     algorithms: Vec<(fn(&mut Jump_Prediction, u32) -> (u32, bool), String)>,
     BTB: HashMap<u32, (u32, bool)>,
-    GHB: u32,
+    GHR: u16,
+    PHT: [u16; 2_u32.pow(16) as usize],
     taken: HashMap<u32, bool>,
     chosen: String,
 }
@@ -30,8 +32,38 @@ fn memory_jump(predictor: &mut Jump_Prediction, addr: u32) -> (u32, bool) {
     }
 }
 
-fn GHB_jump(predictor: &mut Jump_Prediction, addr: u32) -> bool {
-    true
+fn GHR_jump(predictor: &mut Jump_Prediction, addr: u32) -> (u32, bool) {
+    let index = predictor.PHT[predictor.GHR as usize];
+    let x: f32 = random();
+    let (mut dest,mut result) = (0, false);
+    if predictor.BTB.contains_key(&addr) {
+        if let Some(&(d,r)) = predictor.BTB.get(&addr) {
+            dest = d;
+            result = r;
+        }
+    }
+    else {
+        predictor.BTB.insert(addr, (0, false));
+    }
+
+   if 0.2 + (index as f32)*0.2 >= x
+   {
+       predictor.GHR = predictor.GHR << 1;
+       predictor.GHR |= 1;
+       (dest, true)
+   } else {
+       predictor.GHR = predictor.GHR << 1; predictor.GHR |= 0;
+        (dest, false)
+    }
+    /*if index >= 2
+    {
+        predictor.GHR = predictor.GHR << 1; predictor.GHR |= 1;
+        (dest, true)
+    }
+    else {
+        predictor.GHR = predictor.GHR << 1; predictor.GHR |= 0;
+        (dest, false)
+    }*/
 }
 
 impl Jump_Prediction {
@@ -41,7 +73,8 @@ impl Jump_Prediction {
             BTB: HashMap::new(),
             chosen: String::new(),
             taken: HashMap::new(),
-            GHB: 0,
+            GHR: 0,
+            PHT: [0; 2_u32.pow(16) as usize],
         };
         prediction.build();
         prediction.choose();
@@ -54,8 +87,26 @@ impl Jump_Prediction {
             .push((static_jump, String::from("STATIC JUMP FALSE")));
         self.algorithms
             .push((memory_jump, String::from("MEMORY JUMP")));
+        self.algorithms
+            .push((GHR_jump, String::from("GHR JUMP")));
     }
     pub fn change(&mut self, addr: u32, ip: &mut u32, result: bool, dest: i32) {
+        let mut index = self.PHT[self.GHR as usize];
+        if result {
+            if index < 3
+            {
+                index += 1;
+            }
+        }
+        else {
+            if index > 0
+            {
+                index -= 1;
+            }
+        }
+        self.PHT[self.GHR as usize] = index;
+        self.GHR = self.GHR << 1; self.GHR |= result as u16;
+
         if !result && *self.taken.get(&addr).unwrap_or(&false) {
             *ip = addr + 4;
            // println!("unsuccesful jump taken");
