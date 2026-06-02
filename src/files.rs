@@ -98,12 +98,12 @@ pub fn read_program_file(filename: String, mem: &mut Memory) {
                 .parse::<u8>()
                 .expect("R1 Error");
             let imm_str = parts[2].trim_start_matches("0x");
-            let imm = u32::from_str_radix(imm_str, 16).expect("Imm Error");
+            let imm = u16::from_str_radix(imm_str, 16).expect("Imm Error");
 
             word |= (opcode as u32) << 26;
             word |= (rd as u32) << 21;
             word |= (r1 as u32) << 16;
-            word |= imm;
+            word |= imm as u32;
         } else if opcode & 0x20 != 0 {
             let r1 = parts[1]
                 .trim_start_matches('R')
