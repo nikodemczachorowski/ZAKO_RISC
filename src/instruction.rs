@@ -29,6 +29,7 @@ pub struct Instruction {
     in_code: u32,
     operation: ALU,
     dest: u8,
+    used_regs: (u8,u8),
     res: i32,
     addr: u32,
 }
@@ -39,6 +40,7 @@ impl Instruction {
             in_code: 0,
             operation: ALU::NOP,
             dest: 0,
+            used_regs: (0,0),
             res: 0,
             addr: 0x00,
         }
@@ -68,10 +70,12 @@ impl Instruction {
         let mut opcode: u8 = (self.in_code >> 26) as u8;
         self.dest = ((self.in_code >> 21) & 0b11111) as u8;
         let mut reg1 = ((self.in_code >> 16) & 0b11111) as u8;
+        self.used_regs.0 = reg1;
         let mut val1 = regs.get_register_value(reg1);
 
         let val2 = if opcode & 0x30 == 0 {
             let reg2 = ((self.in_code >> 11) & 0b11111) as u8;
+            self.used_regs.1 = reg2;
             regs.get_register_value(reg2)
         } else {
             (self.in_code & 0xFFFF) as i16 as i32
@@ -109,7 +113,14 @@ impl Instruction {
         }
     }
 
-    pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32) {
+    pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32, regs: &RegisterBank) {
+        if(regs.is_register_busy(self.used_regs.0))
+        {
+            println!("{} reg is busy", self.used_regs.0);
+        }
+        if regs.is_register_busy(self.used_regs.1) {
+            println!("{} reg is busy", self.used_regs.1);
+        }
         match self.operation {
             ALU::NOP => (),
             ALU::STORE(_, _) => (),
@@ -134,7 +145,7 @@ impl Instruction {
                 jump_prediction.change(self.addr, ip, op1 >= 0, op2);
             }
             ALU::BRLT(op1, op2) => {
-                println!("{}", op1.to_string());
+                //println!("{}", op1.to_string());
                 jump_prediction.change(self.addr, ip, op1 < 0, op2);
             }
             ALU::BRLE(op1, op2) => {

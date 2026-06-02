@@ -28,8 +28,8 @@ impl RegisterBank {
         self.registers[reg as usize].val = val;
     }
 
-    pub fn is_register_busy(&self, reg: u8) {
-        self.registers[reg as usize].busy;
+    pub fn is_register_busy(&self, reg: u8) -> bool {
+        self.registers[reg as usize].busy
     }
 
     pub fn makr_as_busy(&mut self, reg: u8) {

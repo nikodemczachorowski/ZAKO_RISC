@@ -9,7 +9,7 @@ use crate::memory::Memory;
 pub fn read_memory_file(filename: &String) -> Memory {
     let file = File::open(filename).expect("Could not open the file");
     let reader = BufReader::new(file);
-    let mut mem = Memory::new(3000);
+    let mut mem = Memory::new(10000);
     let mut next_addr: u32 = 0;
 
     let mut lines = reader.lines();

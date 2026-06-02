@@ -58,12 +58,12 @@ impl Jump_Prediction {
     pub fn change(&mut self, addr: u32, ip: &mut u32, result: bool, dest: i32) {
         if !result && *self.taken.get(&addr).unwrap_or(&false) {
             *ip = addr + 4;
-            println!("unsuccesful jump taken");
+           // println!("unsuccesful jump taken");
         } else if result && !*self.taken.get(&addr).unwrap_or(&false) {
             *ip = dest as u32;
             println!("not taken when should have");
         } else {
-            println!("Prediction successfull");
+            //println!("Prediction successfull");
         }
         self.BTB.insert(addr, (dest as u32, result));
     }
@@ -80,7 +80,7 @@ impl Jump_Prediction {
                 .expect("FAILED READING ALGORITHM");
 
             match algorithm_number_to_parse.trim().parse::<u32>() {
-                Ok(number) if number < self.algorithms.len() as u32 => {
+                Ok(number) if number-1 < self.algorithms.len() as u32 => {
                     break number;
                 }
                 _ => {

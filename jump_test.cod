@@ -1,0 +1,86 @@
+ADDI R31, 0x0000, R31
+ADDI R31, 0x1000, R30
+ADDI R31, 0x0003, R1
+ADDI R31, 0x0001, R2
+ADDI R31, 0xFFFF, R3
+ADDI R31, 0x0000, R4
+ADDI R31, 0x000A, R5
+ADDI R31, 0xFFFB, R6
+ADDI R31, 0x0064, R7
+ADDI R31, 0x0000, R20
+main_loop: BRZ R4, t1_brz
+ADDI R20, 0x0001, R20
+t1_brz: BRZ R2, t1_brz_fail
+ADDI R20, 0x0002, R20
+t1_brz_fail: BRNZ R2, t1_brnz
+ADDI R20, 0x0003, R20
+t1_brnz: BRNZ R4, t1_brnz_fail
+ADDI R20, 0x0004, R20
+t1_brnz_fail: BRGT R5, t2_brgt
+ADDI R20, 0x0005, R20
+t2_brgt: BRGT R4, t2_brgt_fail
+ADDI R20, 0x0006, R20
+t2_brgt_fail: BRGT R3, t2_brgt_fail2
+ADDI R20, 0x0007, R20
+t2_brgt_fail2: BRGE R4, t2_brge
+ADDI R20, 0x0008, R20
+t2_brge: BRGE R3, t2_brge_fail
+ADDI R20, 0x0009, R20
+t2_brge_fail: BRGE R5, t2_brge2
+ADDI R20, 0x000A, R20
+t2_brge2: BRLT R3, t3_brlt
+ADDI R20, 0x000B, R20
+t3_brlt: BRLT R4, t3_brlt_fail
+ADDI R20, 0x000C, R20
+t3_brlt_fail: BRLT R5, t3_brlt_fail2
+ADDI R20, 0x000D, R20
+t3_brlt_fail2: BRLE R3, t3_brle
+ADDI R20, 0x000E, R20
+t3_brle: BRLE R4, t3_brle2
+ADDI R20, 0x000F, R20
+t3_brle2: BRLE R5, t3_brle_fail
+ADDI R20, 0x0010, R20
+t3_brle_fail: ADDI R31, 0x0005, R8
+inner_loop: BRZ R8, inner_end
+BRGT R8, inner_skip
+ADDI R20, 0x0014, R20
+inner_skip: SUBI R8, 0x0001, R8
+BRZ R31, inner_loop
+inner_end: ADDI R20, 0x0015, R20
+ADDI R31, 0x0003, R9
+chain1: BRLE R9, chain2
+SUBI R9, 0x0001, R9
+ADDI R20, 0x001E, R20
+BRZ R31, chain1
+chain2: ADDI R20, 0x001F, R20
+ADDI R31, 0x0000, R10
+BRNZ R10, nest_out
+ADDI R31, 0x0001, R11
+BRZ R11, nest_in
+ADDI R20, 0x0028, R20
+nest_in: ADDI R20, 0x0029, R20
+BRZ R31, nest_out
+ADDI R20, 0x002A, R20
+nest_out: ADDI R20, 0x002B, R20
+ADDI R31, 0x0002, R12
+BRZ R12, mod1
+ADDI R20, 0x0032, R20
+BRZ R31, mod2
+mod1: ADDI R20, 0x0033, R20
+mod2: SUBI R12, 0x0002, R12
+BRZ R12, mod3
+ADDI R20, 0x0034, R20
+mod3: ADDI R20, 0x0035, R20
+ADDI R20, 0x003C, R20
+BRZ R31, u1
+ADDI R20, 0x003D, R20
+u1: BRZ R31, u2
+ADDI R20, 0x003E, R20
+u2: BRZ R31, u3
+ADDI R20, 0x003F, R20
+u3: ADDI R20, 0x0040, R20
+STW R20, 0x0000(R30)
+ADDI R30, 0x0004, R30
+ADDI R31, 0x0000, R20
+SUBI R1, 0x0001, R1
+BRNZ R1, main_loop
