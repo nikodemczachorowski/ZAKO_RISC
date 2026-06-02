@@ -2,12 +2,11 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{BufRead, BufReader},
-    ops::Deref,
 };
 
 use crate::memory::Memory;
 
-pub fn read_memory_file(filename: String) -> Memory {
+pub fn read_memory_file(filename: &String) -> Memory {
     let file = File::open(filename).expect("Could not open the file");
     let reader = BufReader::new(file);
     let mut mem = Memory::new(3000);
@@ -38,7 +37,7 @@ pub fn read_memory_file(filename: String) -> Memory {
     mem
 }
 
-pub fn read_program_file(filename: String, mem: &mut Memory) {
+pub fn read_program_file(filename: &String, mem: &mut Memory) {
     let file = File::open(filename).expect("Could not open code file");
     let reader = BufReader::new(file);
     let mut labels: HashMap<String, u32> = HashMap::new();

@@ -1,5 +1,3 @@
-use crate::instruction::Instruction;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io;
 
@@ -71,7 +69,7 @@ impl Jump_Prediction {
     }
     pub fn choose(&mut self) -> () {
         let mut i: u32 = 1;
-        for (func, name) in self.algorithms.iter() {
+        for (_, name) in self.algorithms.iter() {
             println!("{}. {}", i, name);
             i = i + 1;
         }
@@ -95,7 +93,6 @@ impl Jump_Prediction {
     }
 
     pub fn predict(&mut self, addr: u32) -> (u32, bool) {
-        let chosen_algo = self.chosen.clone();
         for i in 0..self.algorithms.len() {
             if self.chosen == self.algorithms[i].1 {
                 let function = self.algorithms[i].0;
@@ -106,4 +103,3 @@ impl Jump_Prediction {
         (0, false)
     }
 }
-

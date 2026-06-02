@@ -97,7 +97,6 @@ impl Instruction {
                 swap(&mut self.dest, &mut reg1);
                 val1 = regs.get_register_value(reg1);
                 self.res = regs.get_register_value(self.dest);
-                println!("STORE: off:{}, idx:{}, val:{}", val2, val1, self.res);
                 ALU::STORE(self.res, (val1 + val2) as u32)
             }
             0x20 => ALU::BRZ(val1, val2),
@@ -124,40 +123,22 @@ impl Instruction {
             ALU::XOR(op1, op2) => self.res = op1 ^ op2,
             ALU::BRZ(op1, op2) => {
                 jump_prediction.change(self.addr, ip, op1 == 0, op2);
-                //       if self.res == 1 {
-                //           *ip = op2 as u32;
-                //       }
             }
             ALU::BRNZ(op1, op2) => {
                 jump_prediction.change(self.addr, ip, op1 != 0, op2);
-                //       if self.res == 1 {
-                //           *ip = op2 as u32;
-                //       }
             }
             ALU::BRGT(op1, op2) => {
                 jump_prediction.change(self.addr, ip, op1 > 0, op2);
-                //       if self.res == 1 {
-                //           *ip = op2 as u32;
-                //       }
             }
             ALU::BRGE(op1, op2) => {
                 jump_prediction.change(self.addr, ip, op1 >= 0, op2);
-                //        if self.res == 1 {
-                //             *ip = op2 as u32;
-                //          }
             }
             ALU::BRLT(op1, op2) => {
                 println!("{}", op1.to_string());
                 jump_prediction.change(self.addr, ip, op1 < 0, op2);
-                //           if self.res == 1 {
-                //                *ip = op2 as u32;
-                //             }
             }
             ALU::BRLE(op1, op2) => {
                 jump_prediction.change(self.addr, ip, op1 <= 0, op2);
-                //              if self.res == 1 {
-                //                   *ip = op2 as u32;
-                //                }
             }
             _ => println!("Unimplemented operation"),
         }
@@ -172,7 +153,6 @@ impl Instruction {
     }
 
     pub fn write_back(&mut self, regs: &mut RegisterBank) {
-        dbg!(&self);
         if self.dest != 0 {
             regs.update_register_value(self.dest, self.res);
             regs.unmark_as_busy(self.dest);
