@@ -35,10 +35,6 @@ impl Simulation {
         if former_ip == self.ip {
             self.ip += 4
         }
-        for i in (1..PIPELINE_LENGTH).rev()
-        {
-
-        }
         self.head = (self.head + PIPELINE_LENGTH - 1) % PIPELINE_LENGTH;
     }
 
