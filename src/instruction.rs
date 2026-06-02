@@ -46,8 +46,7 @@ impl Instruction {
     pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut Jump_Prediction) {
         self.in_code = mem.read(*addr);
         self.addr = *addr;
-        if((self.in_code & (1<<31)) != 0)
-        {
+        if ((self.in_code & (1 << 31)) != 0) {
             let (dest, result) = jump_prediction.predict(*addr);
 
             if dest == 0 && result == true {
@@ -64,15 +63,13 @@ impl Instruction {
         let mut reg1 = ((self.in_code >> 16) & 0b11111) as u8;
         let mut val1 = regs.get_register_value(reg1);
 
-        let val2 = if opcode & 0x10 == 0 {
+        let val2 = if opcode & 0x30 == 0 {
             let reg2 = ((self.in_code >> 11) & 0b11111) as u8;
             regs.get_register_value(reg2)
-        } else if opcode & 0x20 == 1 {
-            (self.in_code & 0xFFFF) as i32
         } else {
-            (self.in_code & 0xFFFF) as i32
+            (self.in_code & 0xFFFF) as i16 as i32
         };
-        dbg!(&self);
+        //        dbg!(&self);
         opcode &= 0b1111;
         self.operation = match opcode {
             0x00 => ALU::NOP,
@@ -86,6 +83,7 @@ impl Instruction {
             0x08 => {
                 swap(&mut self.dest, &mut reg1);
                 val1 = regs.get_register_value(reg1);
+                println!("LOAD off:{} idx:{}", val1, val2);
                 ALU::LOAD((val1 + val2) as u32)
             }
             0x09 => {
@@ -107,6 +105,8 @@ impl Instruction {
     pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32) {
         match self.operation {
             ALU::NOP => (),
+            ALU::STORE(_, _) => (),
+            ALU::LOAD(_) => (),
             ALU::ADD(op1, op2) => self.res = op1 + op2,
             ALU::SUB(op1, op2) => self.res = op1 - op2,
             ALU::MUL(op1, op2) => self.res = op1 * op2,

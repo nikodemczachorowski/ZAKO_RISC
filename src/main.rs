@@ -13,10 +13,11 @@ mod simulation;
 
 fn main() {
     let mut mem = read_memory_file("pipe2.dat".to_string());
-    read_program_file("pipe2.cod".to_string(), &mut mem);
+    read_program_file("pipe2_1.cod".to_string(), &mut mem);
     let mut sim = Simulation::new(mem, 32);
     while sim.ip < 500 {
         sim.tick();
+        println!("{:04X}", sim.ip)
     }
 
     print_mem(sim.get_memory());
