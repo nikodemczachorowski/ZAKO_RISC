@@ -48,7 +48,7 @@ impl Instruction {
     pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut Jump_Prediction) {
         self.in_code = mem.read(*addr);
         self.addr = *addr;
-        if self.addr == 424 {
+        if self.addr > 10000 {
             println!();
         }
         if (self.in_code & (1 << 31)) != 0 {
@@ -113,14 +113,15 @@ impl Instruction {
         }
     }
 
-    pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32, regs: &RegisterBank) {
-        if(regs.is_register_busy(self.used_regs.0))
+    pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32, regs: &mut RegisterBank) {
+        /*if(regs.is_register_busy(self.used_regs.0))
         {
             println!("{} reg is busy", self.used_regs.0);
         }
         if regs.is_register_busy(self.used_regs.1) {
             println!("{} reg is busy", self.used_regs.1);
         }
+        regs.makr_as_busy(self.dest);*/
         match self.operation {
             ALU::NOP => (),
             ALU::STORE(_, _) => (),

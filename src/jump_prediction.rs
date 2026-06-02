@@ -46,18 +46,18 @@ fn GHR_jump(predictor: &mut Jump_Prediction, addr: u32) -> (u32, bool) {
         predictor.BTB.insert(addr, (0, false));
     }
 
-   if 0.2 + (index as f32)*0.2 >= x
+   if 0.40 + (index as f32)*0.2 >= x
    {
        predictor.GHR = predictor.GHR << 1;
        predictor.GHR |= 1;
-       predictor.taken.insert(addr,true);
+       //predictor.taken.insert(addr,true);
        (dest, true)
    } else {
        predictor.GHR = predictor.GHR << 1; predictor.GHR |= 0;
-       predictor.taken.insert(addr,false);
+       //predictor.taken.insert(addr,false);
         (dest, false)
     }
-    /*if index >= 2
+    /*if index >= 3
     {
         predictor.GHR = predictor.GHR << 1; predictor.GHR |= 1;
         predictor.taken.insert(addr,true);
@@ -113,12 +113,13 @@ impl Jump_Prediction {
 
         if !result && *self.taken.get(&addr).unwrap_or(&false) {
             *ip = addr + 4;
-           // println!("unsuccesful jump taken");
+            //println!("unsuccesful jump taken");
         } else if result && !*self.taken.get(&addr).unwrap_or(&false) {
             *ip = dest as u32;
-            println!("not taken when should have");
+           // println!("{},{}", addr, dest);
+            //println!("not taken when should have");
         } else {
-            //println!("Prediction successfull");
+           // println!("Prediction successfull");
         }
         self.BTB.insert(addr, (dest as u32, result));
     }

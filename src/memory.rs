@@ -42,6 +42,10 @@ impl Memory {
     }
 
     pub fn write<T: Memable>(&mut self, addr: u32, val: T) {
+        if addr > 50000
+        {
+            println!();
+        }
         let us_addr = addr as usize;
         val.to_bytes(&mut self.mem[us_addr..us_addr + T::SIZE]);
     }
