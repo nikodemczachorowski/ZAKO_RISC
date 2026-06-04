@@ -8,24 +8,32 @@ cargo run -- PLIK_Z_KOMENDAMI_COD PLIK_Z_PAMIECIA_DAT
 ```
 WAŻNE! W PRZYPADKU WŁASNEGO PROGRAMU, .COD MUSI BYĆ EDYTOWANY NA FORMAT .COD PODOBNY W PRZYKLADOWYCH. TO ZNACZY, ŻE MUSZĄ BYĆ JEDYNIE MNEMONIKI I REJESTRY!!!
 
-Dostępne mnemoniki w instruction.rs w enum ALU:
+Dostępne mnemoniki w files.rs w wczytywaniu z pliku:
 ```rust
-enum ALU {
-    NOP,
-    ADD(i32, i32),
-    SUB(i32, i32),
-    MUL(i32, i32),
-    DIV(i32, i32),
-    AND(i32, i32),
-    OR(i32, i32),
-    XOR(i32, i32),
-    LOAD(u32),
-    STORE(i32, u32),
-    BRZ(i32, i32),
-    BRNZ(i32, i32),
-    BRGT(i32, i32),
-    BRGE(i32, i32),
-    BRLT(i32, i32),
-    BRLE(i32, i32),
-}
+ let opcode: u8 = match parts[0].to_uppercase().as_str() {
+            "ADD" => 0x01,
+            "ADDI" => 0x11,
+            "SUB" => 0x02,
+            "SUBI" => 0x12,
+            "MUL" => 0x03,
+            "MULI" => 0x13,
+            "DIV" => 0x04,
+            "DIVI" => 0x14,
+            "AND" => 0x05,
+            "ANDI" => 0x15,
+            "OR" => 0x06,
+            "ORI" => 0x16,
+            "XOR" => 0x07,
+            "XORI" => 0x17,
+            "LDW" => 0x18,
+            "STW" => 0x19,
+            "BRZ" => 0x20,
+            "BRNZ" => 0x21,
+            "BRGT" => 0x22,
+            "BRGE" => 0x23,
+            "BRLT" => 0x24,
+            "BRLE" => 0x25,
+            "NOP" => 0x00,
+            instr => panic!("Invalid instruction: {}", instr),
+        };
 ```
