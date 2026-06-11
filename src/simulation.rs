@@ -1,4 +1,4 @@
-use crate::jump_prediction::Jump_Prediction;
+use crate::jump_prediction::JumpPrediction;
 use crate::{instruction::Instruction, memory::Memory, register_bank::RegisterBank};
 
 const PIPELINE_LENGTH: usize = 5;
@@ -6,7 +6,7 @@ const PIPELINE_LENGTH: usize = 5;
 pub struct Simulation {
     memory: Memory,
     register_bank: RegisterBank,
-    jump_prediction: Jump_Prediction,
+    jump_prediction: JumpPrediction,
     pipeline: [Instruction; PIPELINE_LENGTH],
     pub ip: u32,
     head: usize,
@@ -16,7 +16,7 @@ impl Simulation {
     pub fn new(mem: Memory, reg_count: u32) -> Self {
         Self {
             memory: mem,
-            jump_prediction: Jump_Prediction::new(),
+            jump_prediction: JumpPrediction::new(),
             register_bank: RegisterBank::new(reg_count),
             pipeline: [Instruction::new(); PIPELINE_LENGTH],
             ip: 0,
@@ -27,13 +27,17 @@ impl Simulation {
     pub fn tick(&mut self) {
         let former_ip = self.ip;
         self.pipeline[self.head].fetch(&mut self.ip, &self.memory, &mut self.jump_prediction);
-        self.pipeline[(self.head + 3) % PIPELINE_LENGTH].memory(&mut self.memory);
+        self.pipeline[(self.head + 3) % PIPELINE_LENGTH]
+            .memory(&mut self.memory, &mut self.register_bank);
         self.pipeline[(self.head + 4) % PIPELINE_LENGTH].write_back(&mut self.register_bank);
 
         let jump_ip = self.ip;
         self.pipeline[(self.head + 1) % PIPELINE_LENGTH].decode(&self.register_bank);
-        self.pipeline[(self.head + 2) % PIPELINE_LENGTH]
-            .execute(&mut self.jump_prediction, &mut self.ip, &mut self.register_bank);
+        self.pipeline[(self.head + 2) % PIPELINE_LENGTH].execute(
+            &mut self.jump_prediction,
+            &mut self.ip,
+            &mut self.register_bank,
+        );
         if self.ip != jump_ip
         // when fetch changed ip to fetch after jump instructions and execute reversed it due to no jump, reset fetch, decode
         {

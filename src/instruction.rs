@@ -1,6 +1,6 @@
 use std::mem::swap;
 
-use crate::jump_prediction::Jump_Prediction;
+use crate::jump_prediction::JumpPrediction;
 use crate::memory::*;
 use crate::register_bank::*;
 
@@ -29,7 +29,7 @@ pub struct Instruction {
     in_code: u32,
     operation: ALU,
     dest: u8,
-    used_regs: (u8,u8),
+    used_regs: (u8, u8),
     res: i32,
     addr: u32,
 }
@@ -40,12 +40,12 @@ impl Instruction {
             in_code: 0,
             operation: ALU::NOP,
             dest: 0,
-            used_regs: (0,0),
+            used_regs: (0, 0),
             res: 0,
             addr: 0x00,
         }
     }
-    pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut Jump_Prediction) {
+    pub fn fetch(&mut self, addr: &mut u32, mem: &Memory, jump_prediction: &mut JumpPrediction) {
         self.in_code = mem.read(*addr);
         self.addr = *addr;
         if self.addr > 10000 {
@@ -63,23 +63,25 @@ impl Instruction {
     }
 
     pub fn decode(&mut self, regs: &RegisterBank) {
-        if self.addr == 424 {
-            println!();
-        }
-
         let mut opcode: u8 = (self.in_code >> 26) as u8;
         self.dest = ((self.in_code >> 21) & 0b11111) as u8;
         let mut reg1 = ((self.in_code >> 16) & 0b11111) as u8;
         self.used_regs.0 = reg1;
         let mut val1 = regs.get_register_value(reg1);
 
+        let mut reg2: u8 = 0; //if we do not use second register, it is set as 0 as reg0 is never busy
+
         let val2 = if opcode & 0x30 == 0 {
-            let reg2 = ((self.in_code >> 11) & 0b11111) as u8;
+            reg2 = ((self.in_code >> 11) & 0b11111) as u8;
             self.used_regs.1 = reg2;
             regs.get_register_value(reg2)
         } else {
             (self.in_code & 0xFFFF) as i16 as i32
         };
+
+        if regs.is_register_busy(reg1) || regs.is_register_busy(reg2) {
+            println!("One or more registers have old value");
+        }
         //        dbg!(&self);
         opcode &= 0b101111;
         self.operation = match opcode {
@@ -113,52 +115,59 @@ impl Instruction {
         }
     }
 
-    pub fn execute(&mut self, jump_prediction: &mut Jump_Prediction, ip: &mut u32, regs: &mut RegisterBank) {
-        /*if(regs.is_register_busy(self.used_regs.0))
-        {
-            println!("{} reg is busy", self.used_regs.0);
-        }
-        if regs.is_register_busy(self.used_regs.1) {
-            println!("{} reg is busy", self.used_regs.1);
-        }
-        regs.makr_as_busy(self.dest);*/
+    pub fn execute(
+        &mut self,
+        jump_prediction: &mut JumpPrediction,
+        ip: &mut u32,
+        regs: &mut RegisterBank,
+    ) {
         match self.operation {
             ALU::NOP => (),
             ALU::STORE(_, _) => (),
             ALU::LOAD(_) => (),
-            ALU::ADD(op1, op2) => self.res = op1 + op2,
-            ALU::SUB(op1, op2) => self.res = op1 - op2,
-            ALU::MUL(op1, op2) => self.res = op1 * op2,
-            ALU::DIV(op1, op2) => self.res = op1 / op2,
-            ALU::AND(op1, op2) => self.res = op1 & op2,
-            ALU::OR(op1, op2) => self.res = op1 | op2,
-            ALU::XOR(op1, op2) => self.res = op1 ^ op2,
-            ALU::BRZ(op1, op2) => {
-                jump_prediction.change(self.addr, ip, op1 == 0, op2);
+            ALU::ADD(op1, op2) => {
+                regs.mark_as_busy(self.dest);
+                self.res = op1 + op2;
             }
-            ALU::BRNZ(op1, op2) => {
-                jump_prediction.change(self.addr, ip, op1 != 0, op2);
+            ALU::SUB(op1, op2) => {
+                regs.mark_as_busy(self.dest);
+                self.res = op1 - op2;
             }
-            ALU::BRGT(op1, op2) => {
-                jump_prediction.change(self.addr, ip, op1 > 0, op2);
+            ALU::MUL(op1, op2) => {
+                regs.mark_as_busy(self.dest);
+                self.res = op1 * op2;
             }
-            ALU::BRGE(op1, op2) => {
-                jump_prediction.change(self.addr, ip, op1 >= 0, op2);
+            ALU::DIV(op1, op2) => {
+                regs.mark_as_busy(self.dest);
+                self.res = op1 / op2;
             }
-            ALU::BRLT(op1, op2) => {
-                //println!("{}", op1.to_string());
-                jump_prediction.change(self.addr, ip, op1 < 0, op2);
+            ALU::AND(op1, op2) => {
+                regs.mark_as_busy(self.dest);
+                self.res = op1 & op2;
             }
-            ALU::BRLE(op1, op2) => {
-                jump_prediction.change(self.addr, ip, op1 <= 0, op2);
+            ALU::OR(op1, op2) => {
+                regs.mark_as_busy(self.dest);
+                self.res = op1 | op2;
             }
-            _ => println!("Unimplemented operation"),
+            ALU::XOR(op1, op2) => {
+                regs.mark_as_busy(self.dest);
+                self.res = op1 ^ op2;
+            }
+            ALU::BRZ(op1, op2) => jump_prediction.change(self.addr, ip, op1 == 0, op2),
+            ALU::BRNZ(op1, op2) => jump_prediction.change(self.addr, ip, op1 != 0, op2),
+            ALU::BRGT(op1, op2) => jump_prediction.change(self.addr, ip, op1 > 0, op2),
+            ALU::BRGE(op1, op2) => jump_prediction.change(self.addr, ip, op1 >= 0, op2),
+            ALU::BRLT(op1, op2) => jump_prediction.change(self.addr, ip, op1 < 0, op2),
+            ALU::BRLE(op1, op2) => jump_prediction.change(self.addr, ip, op1 <= 0, op2),
         }
     }
 
-    pub fn memory(&mut self, mem: &mut Memory) {
+    pub fn memory(&mut self, mem: &mut Memory, regs: &mut RegisterBank) {
         match self.operation {
-            ALU::LOAD(addr) => self.res = mem.read(addr),
+            ALU::LOAD(addr) => {
+                self.res = mem.read(addr);
+                regs.mark_as_busy(self.dest);
+            }
             ALU::STORE(op, addr) => mem.write(addr, op),
             _ => (),
         }

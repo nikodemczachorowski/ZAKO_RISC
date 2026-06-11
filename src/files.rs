@@ -50,7 +50,7 @@ pub fn read_program_file(filename: &String, mem: &mut Memory) {
         let cleared = line.replace(",", "").replace("(", " ").replace(")", "");
         let parts_vec: Vec<&str> = cleared.split_whitespace().collect();
         let mut parts = parts_vec.as_slice();
-        print!("{}\n", line);
+
         if parts[0].ends_with(":") {
             labels
                 .entry(parts[0].trim_end_matches(':').to_string())

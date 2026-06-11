@@ -21,11 +21,15 @@ fn main() {
     }
     let mem_file = &args[2];
     let cod_file = &args[1];
+    let mut breakpoint = 500;
+    if args.len() > 3 {
+        breakpoint = u32::from_str_radix(&args[3], 10).unwrap_or(500);
+    }
     let mut mem = read_memory_file(mem_file);
     read_program_file(cod_file, &mut mem);
     let mut sim = Simulation::new(mem, 32);
     let mut counter = 0;
-    while sim.ip < 500 {
+    while sim.ip < breakpoint {
         sim.tick();
         counter += 1;
         // println!("{:04X}", sim.ip)
