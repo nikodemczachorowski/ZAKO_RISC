@@ -78,7 +78,7 @@ impl Instruction {
         };
 
         if regs.is_register_busy(reg1) || regs.is_register_busy(reg2) {
-            println!("One or more registers has old value");
+            //println!("One or more registers has old value");
         }
 
         opcode &= 0b101111;
@@ -101,6 +101,8 @@ impl Instruction {
                 swap(&mut self.dest, &mut reg1);
                 val1 = regs.get_register_value(reg1);
                 self.res = regs.get_register_value(self.dest);
+                self.dest = 0;
+                //println!("STORE off:{} idx:{} val:{}", val1, val2, self.res);
                 ALU::STORE(self.res, (val1 + val2) as u32)
             }
             0x20 => ALU::BRZ(val1, val2),

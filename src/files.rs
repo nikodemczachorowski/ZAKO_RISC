@@ -9,7 +9,7 @@ use crate::memory::Memory;
 pub fn read_memory_file(filename: &String) -> Memory {
     let file = File::open(filename).expect("Could not open the file");
     let reader = BufReader::new(file);
-    let mut mem = Memory::new(70000);
+    let mut mem = Memory::new(2048);
     let mut next_addr: u32 = 0;
 
     let mut lines = reader.lines();
@@ -144,7 +144,7 @@ pub fn read_program_file(filename: &String, mem: &mut Memory) {
 
 pub fn print_mem(mem: &Memory) {
     let mut next_addr: u32 = 0;
-    while next_addr < 2016 {
+    while next_addr < 2048 {
         let val: i32 = mem.read(next_addr);
         print!("{:08X} ", val);
         next_addr += 4;
